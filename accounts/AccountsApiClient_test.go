@@ -133,104 +133,104 @@ func TestAccountsApiClient_CreateAccountWithWrongInput(t *testing.T) {
 		{
 			name:          "Should fail when nil name",
 			attributes:    &AccountAttributes{},
-			expectedError: errorNameLength,
+			expectedError: "name in body is required",
 		},
 		{
 			name:          "Should fail when empty name",
 			attributes:    &AccountAttributes{Name: []string{}},
-			expectedError: errorNameLength,
+			expectedError: "name in body is required",
 		},
 		{
 			name:          "Should fail when name is too long",
 			attributes:    &AccountAttributes{Name: []string{"a", "b", "c", "d", "e"}},
-			expectedError: errorNameLength,
+			expectedError: "name in body should have at most 4 items",
 		},
 		{
 			name:          "Should fail when first name is empy",
 			attributes:    &AccountAttributes{Name: []string{"", "a", "b", "c"}},
-			expectedError: errorNameEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when second name is empy",
 			attributes:    &AccountAttributes{Name: []string{"a", "", "b", "c"}},
-			expectedError: errorNameEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when third name is empy",
 			attributes:    &AccountAttributes{Name: []string{"a", "b", "", "c"}},
-			expectedError: errorNameEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when fourth name is empy",
 			attributes:    &AccountAttributes{Name: []string{"a", "b", "v", ""}},
-			expectedError: errorNameEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when country is missing",
 			attributes:    &AccountAttributes{Name: []string{"a"}},
-			expectedError: errorCountryMissing,
+			expectedError: "country in body is required",
 		},
 		{
 			name:          "Should fail when BIC has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, Bic: "nwbkgb22"},
-			expectedError: errorBicFormat,
+			expectedError: "bic in body should match '^([A-Z]{6}[A-Z0-9]{2}|[A-Z]{6}[A-Z0-9]{5})$'",
 		},
 		{
 			name:          "Should fail when BIC has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, Bic: "jlkjiogfdhgsd"},
-			expectedError: errorBicFormat,
+			expectedError: "bic in body should match '^([A-Z]{6}[A-Z0-9]{2}|[A-Z]{6}[A-Z0-9]{5})$'",
 		},
 		{
 			name:          "Should fail when Bic has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, Bic: "NWBKGB22A"},
-			expectedError: errorBicFormat,
+			expectedError: "bic in body should match '^([A-Z]{6}[A-Z0-9]{2}|[A-Z]{6}[A-Z0-9]{5})$'",
 		},
 		{
 			name:          "Should fail when Iban has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, Iban: "G111NWBK40030041426812"},
-			expectedError: errorIbanFormat,
+			expectedError: "iban in body should match '^[A-Z]{2}[0-9]{2}[A-Z0-9]{0,64}$'",
 		},
 		{
 			name:          "Should fail when AccountNumber has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, AccountNumber: "54gf"},
-			expectedError: errorAccountNumberFormat,
+			expectedError: "account_number in body should match '^[A-Z0-9]{0,64}$'",
 		},
 		{
 			name:          "Should fail when BankID has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, BankID: "gdgrygfjgf"},
-			expectedError: errorBankIDFormat,
+			expectedError: "bank_id in body should match '^[A-Z0-9]{0,16}$'",
 		},
 		{
 			name:          "Should fail when BankIDCode has incorrect format",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, BankIDCode: "gdgrygfjgf"},
-			expectedError: errorBankIDCodeFormat,
+			expectedError: "bank_id_code in body should match '^[A-Z]{0,16}$'",
 		},
 		{
 			name:          "Should fail when AlternativeNames is too long",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, AlternativeNames: []string{"a", "b", "c", "d"}},
-			expectedError: errorSecondaryIdentificationLength,
+			expectedError: "alternative_names in body should have at most 3 items",
 		},
 		{
 			name:          "Should fail when first AlternativeName is empty",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, AlternativeNames: []string{"", "b", "c"}},
-			expectedError: errorSecondaryIdentificationEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when second AlternativeName is empty",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, AlternativeNames: []string{"a", "", "c"}},
-			expectedError: errorSecondaryIdentificationEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 		{
 			name:          "Should fail when third AlternativeName is empty",
 			attributes:    &AccountAttributes{Name: []string{"a"}, Country: &country, AlternativeNames: []string{"a", "b", ""}},
-			expectedError: errorSecondaryIdentificationEmpty,
+			expectedError: "should be at least 1 chars long",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			organisation_id := uuid.NewV1()
 			_, err := client.CreateAccount(organisation_id, tt.attributes)
-			assert.EqualValues(t, tt.expectedError, err.Error())
+			assert.ErrorContains(t, err, tt.expectedError)
 		})
 	}
 }

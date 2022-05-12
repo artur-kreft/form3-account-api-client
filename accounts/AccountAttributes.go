@@ -2,7 +2,6 @@ package accounts
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/biter777/countries"
 )
 
@@ -73,73 +72,5 @@ func (attributes *AccountAttributes) UnmarshalJSON(data []byte) error {
 		attributes.Country = &country
 	}
 
-	return nil
-}
-
-func isValid(attributes *AccountAttributes) error {
-	if len(attributes.Name) == 0 || len(attributes.Name) > 4 {
-		return errors.New(errorNameLength)
-	}
-
-	containsEmptyName := any(attributes.Name, func(value string) bool {
-		return len(value) == 0
-	})
-
-	if containsEmptyName {
-		return errors.New(errorNameEmpty)
-	}
-
-	if attributes.Country == nil {
-		return errors.New(errorCountryMissing)
-	}
-
-	if len(attributes.Bic) > 0 {
-		match := bicRegexp.MatchString(attributes.Bic)
-		if match == false {
-			return errors.New(errorBicFormat)
-		}
-	}
-
-	if len(attributes.BankID) > 0 {
-		match := bankIdRegexp.MatchString(attributes.BankID)
-		if match == false {
-			return errors.New(errorBankIDFormat)
-		}
-	}
-
-	if len(attributes.BankIDCode) > 0 {
-		match := bankIdCodeRegexp.MatchString(attributes.BankIDCode)
-		if match == false {
-			return errors.New(errorBankIDCodeFormat)
-		}
-	}
-
-	if len(attributes.AccountNumber) > 0 {
-		match := accountNumberRegexp.MatchString(attributes.AccountNumber)
-		if match == false {
-			return errors.New(errorAccountNumberFormat)
-		}
-	}
-
-	if len(attributes.Iban) > 0 {
-		match := ibanRegexp.MatchString(attributes.Iban)
-		if match == false {
-			return errors.New(errorIbanFormat)
-		}
-	}
-
-	if len(attributes.AlternativeNames) > 0 {
-		if len(attributes.AlternativeNames) > 3 {
-			return errors.New(errorSecondaryIdentificationLength)
-		}
-
-		containsEmpty := any(attributes.AlternativeNames, func(value string) bool {
-			return len(value) == 0
-		})
-
-		if containsEmpty {
-			return errors.New(errorSecondaryIdentificationEmpty)
-		}
-	}
 	return nil
 }

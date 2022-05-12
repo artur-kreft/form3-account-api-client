@@ -51,11 +51,6 @@ func (client *AccountsApiClient) GetAccount(accountId uuid.UUID) (*AccountData, 
 // Create new account and return it's AccountData.
 // AccountAttributes.Name and AccountAttributes.Country are required.
 func (client *AccountsApiClient) CreateAccount(organisationId uuid.UUID, attributes *AccountAttributes) (*AccountData, error) {
-	err := isValid(attributes)
-	if err != nil {
-		return nil, err
-	}
-
 	id := uuid.NewV1()
 	body := &accountBody{
 		Data: &AccountData{
