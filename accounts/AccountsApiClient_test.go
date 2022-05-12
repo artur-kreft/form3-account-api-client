@@ -17,6 +17,15 @@ func cleanup(t *testing.T, client *AccountsApiClient, accountData *AccountData) 
 	}
 }
 
+func TestAccountsClient_ShouldFailForWrongApiUrl(t *testing.T) {
+	c := NewClient("wrong_api_url")
+	id := uuid.NewV1()
+
+	_, err := c.GetAccount(id)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "unsupported protocol scheme")
+}
+
 func TestAccountsClient_GetShouldFailForMissingAccount(t *testing.T) {
 	c := NewClient(*apiUrlFlag)
 	id := uuid.NewV1()
