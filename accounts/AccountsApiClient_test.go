@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var apiUrlFlag = flag.String("api_url", "http://localhost/8080/v1", "url of working api")
+var apiUrlFlag = flag.String("api_url", "http://localhost:8080/v1", "url of working api")
 
 func cleanup(t *testing.T, client *AccountsApiClient, accountData *AccountData) {
 	if accountData != nil {
