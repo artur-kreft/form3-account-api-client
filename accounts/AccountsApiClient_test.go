@@ -10,7 +10,7 @@ import (
 
 var apiUrlFlag = flag.String("api_url", "http://localhost:8080/v1", "url of working api")
 
-func cleanup(t *testing.T, client *AccountsApiClient, accountData *AccountData) {
+func cleanup(t *testing.T, client AccountsApiClient, accountData *AccountData) {
 	if accountData != nil {
 		err := client.DeleteAccount(accountData.ID, *accountData.Version)
 		assert.NoError(t, err)
@@ -18,10 +18,10 @@ func cleanup(t *testing.T, client *AccountsApiClient, accountData *AccountData) 
 }
 
 func TestAccountsClient_ShouldFailForWrongApiUrl(t *testing.T) {
-	c := NewClient("wrong_api_url")
+	client := NewClient("wrong_api_url")
 	id := uuid.NewV1()
 
-	_, err := c.GetAccount(id)
+	_, err := client.GetAccount(id)
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "unsupported protocol scheme")
 }
