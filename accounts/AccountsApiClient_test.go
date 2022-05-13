@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"context"
 	"flag"
 	"github.com/biter777/countries"
 	uuid "github.com/satori/go.uuid"
@@ -12,7 +13,7 @@ var apiUrlFlag = flag.String("api_url", "http://localhost:8080/v1", "url of work
 
 func cleanup(t *testing.T, client AccountsApiClient, accountData *AccountData) {
 	if accountData != nil {
-		err := client.DeleteAccount(accountData.ID, *accountData.Version)
+		err := client.DeleteAccount(context.Background(), accountData.ID, *accountData.Version)
 		assert.NoError(t, err)
 	}
 }
@@ -21,7 +22,7 @@ func TestAccountsClient_ShouldFailForWrongApiUrl(t *testing.T) {
 	client := NewClient("wrong_api_url")
 	id := uuid.NewV1()
 
-	_, err := client.GetAccount(id)
+	_, err := client.GetAccount(context.Background(), &id)
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "unsupported protocol scheme")
 }
@@ -30,7 +31,7 @@ func TestAccountsClient_GetShouldFailForMissingAccount(t *testing.T) {
 	c := NewClient(*apiUrlFlag)
 	id := uuid.NewV1()
 
-	_, errGet := c.GetAccount(id)
+	_, errGet := c.GetAccount(context.Background(), &id)
 	assert.Error(t, errGet)
 	assert.ErrorContains(t, errGet, id.String())
 }
@@ -70,17 +71,17 @@ func TestAccountsClient_GetShouldReturnCorrectAttributes(t *testing.T) {
 		Switched:                &switched,
 	}
 
-	resCreate, errCreate := client.CreateAccount(organisation_id, attributes)
+	resCreate, errCreate := client.CreateAccount(context.Background(), &organisation_id, attributes)
 	defer cleanup(t, client, resCreate)
 
 	assert.NoError(t, errCreate)
 
-	resGet, errGet := client.GetAccount(resCreate.ID)
+	resGet, errGet := client.GetAccount(context.Background(), resCreate.ID)
 	assert.NotNil(t, resGet)
 	assert.NoError(t, errGet)
 	assert.EqualValues(t, resCreate.ID, resGet.ID)
 	assert.EqualValues(t, attributes, resGet.Attributes)
-	assert.EqualValues(t, organisation_id, resGet.OrganisationID)
+	assert.EqualValues(t, &organisation_id, resGet.OrganisationID)
 	assert.EqualValues(t, 0, *resGet.Version)
 }
 
@@ -120,13 +121,13 @@ func TestAccountsClient_CreateShouldReturnCorrectAttributes(t *testing.T) {
 		Switched:                &switched,
 	}
 
-	res, err := client.CreateAccount(organisation_id, attributes)
+	res, err := client.CreateAccount(context.Background(), &organisation_id, attributes)
 	defer cleanup(t, client, res)
 
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 	assert.EqualValues(t, attributes, res.Attributes)
-	assert.EqualValues(t, organisation_id, res.OrganisationID)
+	assert.EqualValues(t, &organisation_id, res.OrganisationID)
 	assert.EqualValues(t, 0, *res.Version)
 }
 
@@ -238,7 +239,7 @@ func TestAccountsApiClient_CreateAccountWithWrongInput(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			organisation_id := uuid.NewV1()
-			_, err := client.CreateAccount(organisation_id, tt.attributes)
+			_, err := client.CreateAccount(context.Background(), &organisation_id, tt.attributes)
 			assert.ErrorContains(t, err, tt.expectedError)
 		})
 	}
@@ -248,7 +249,7 @@ func TestAccountsClient_DeleteShouldFailForMissingAccount(t *testing.T) {
 	client := NewClient(*apiUrlFlag)
 	id := uuid.NewV1()
 
-	err := client.DeleteAccount(id, 0)
+	err := client.DeleteAccount(context.Background(), &id, 0)
 	assert.Error(t, err)
 }
 
@@ -263,12 +264,12 @@ func TestAccountsClient_DeleteShouldFailForWrongVersion(t *testing.T) {
 		Country: &country,
 	}
 
-	resCreate, errCreate := client.CreateAccount(organisation_id, attributes)
+	resCreate, errCreate := client.CreateAccount(context.Background(), &organisation_id, attributes)
 	defer cleanup(t, client, resCreate)
 
 	assert.NoError(t, errCreate)
 
-	errDelete := client.DeleteAccount(resCreate.ID, 1)
+	errDelete := client.DeleteAccount(context.Background(), resCreate.ID, 1)
 	assert.Error(t, errDelete)
 	assert.EqualError(t, errDelete, "invalid version")
 }

@@ -2,27 +2,23 @@ package accounts
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 type accountBody struct {
 	Data *AccountData `json:"data"`
 }
 
-const (
-	BaseURL = "/organisation/accounts"
-)
-
 type AccountsApiClient interface {
-	GetAccount(accountId uuid.UUID) (*AccountData, error)
-	CreateAccount(organisationId uuid.UUID, attributes *AccountAttributes) (*AccountData, error)
-	DeleteAccount(accountId uuid.UUID, version uint64) error
+	GetAccount(ctx context.Context, accountId *uuid.UUID) (*AccountData, error)
+	CreateAccount(ctx context.Context, organisationId *uuid.UUID, attributes *AccountAttributes) (*AccountData, error)
+	DeleteAccount(ctx context.Context, accountId *uuid.UUID, version uint64) error
 }
 
 type accountsApiClient struct {
@@ -32,16 +28,16 @@ type accountsApiClient struct {
 
 func NewClient(apiUrl string) AccountsApiClient {
 	return &accountsApiClient{
-		BaseURL: fmt.Sprintf("%s%s", apiUrl, BaseURL),
+		BaseURL: fmt.Sprintf("%s%s", apiUrl, baseApiUrl),
 		HTTPClient: &http.Client{
-			Timeout: time.Minute,
+			Timeout: apiDefaultTimeout,
 		},
 	}
 }
 
 // Fetch AccountData for provided accountId
-func (client *accountsApiClient) GetAccount(accountId uuid.UUID) (*AccountData, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", client.BaseURL, url.PathEscape(accountId.String())), nil)
+func (client *accountsApiClient) GetAccount(ctx context.Context, accountId *uuid.UUID) (*AccountData, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/%s", client.BaseURL, url.PathEscape(accountId.String())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +52,12 @@ func (client *accountsApiClient) GetAccount(accountId uuid.UUID) (*AccountData, 
 
 // Create new account and return it's AccountData.
 // AccountAttributes.Name and AccountAttributes.Country are required.
-func (client *accountsApiClient) CreateAccount(organisationId uuid.UUID, attributes *AccountAttributes) (*AccountData, error) {
+func (client *accountsApiClient) CreateAccount(ctx context.Context, organisationId *uuid.UUID, attributes *AccountAttributes) (*AccountData, error) {
 	id := uuid.NewV1()
 	body := &accountBody{
 		Data: &AccountData{
 			Type:           "accounts",
-			ID:             id,
+			ID:             &id,
 			OrganisationID: organisationId,
 			Attributes:     attributes,
 		},
@@ -73,7 +69,7 @@ func (client *accountsApiClient) CreateAccount(organisationId uuid.UUID, attribu
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, client.BaseURL, bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, client.BaseURL, bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +83,9 @@ func (client *accountsApiClient) CreateAccount(organisationId uuid.UUID, attribu
 }
 
 // Delete nth version of AccountData for provided accountId
-func (client *accountsApiClient) DeleteAccount(accountId uuid.UUID, version uint64) error {
+func (client *accountsApiClient) DeleteAccount(ctx context.Context, accountId *uuid.UUID, version uint64) error {
 
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", client.BaseURL, url.PathEscape(accountId.String()), version), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/%s?version=%d", client.BaseURL, url.PathEscape(accountId.String()), version), nil)
 	if err != nil {
 		return err
 	}
