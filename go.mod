@@ -1,4 +1,4 @@
-module github.com/artur-kreft/form3-account-api-client/accounts
+module github.com/artur-kreft/form3-account-api-client
 
 go 1.18
 
