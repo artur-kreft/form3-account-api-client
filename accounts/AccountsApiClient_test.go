@@ -7,6 +7,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 var apiUrlFlag = flag.String("api_url", "http://localhost:8080/v1", "url of working api")
@@ -272,4 +273,116 @@ func TestAccountsClient_DeleteShouldFailForWrongVersion(t *testing.T) {
 	errDelete := client.DeleteAccount(context.Background(), resCreate.ID, 1)
 	assert.Error(t, errDelete)
 	assert.EqualError(t, errDelete, "invalid version")
+}
+
+func TestAccountsClient_GetShouldListenToContext(t *testing.T) {
+	c := NewClient(*apiUrlFlag)
+	id := uuid.NewV1()
+
+	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute*-10))
+	defer deadlineCancel()
+
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tests := []struct {
+		name          string
+		ctx           context.Context
+		expectedError string
+	}{
+		{
+			name:          "Should fail when canceled",
+			ctx:           cancelCtx,
+			expectedError: "canceled",
+		},
+		{
+			name:          "Should fail when deadline exceeded",
+			ctx:           deadlineCtx,
+			expectedError: "deadline exceeded",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := c.GetAccount(tt.ctx, &id)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, tt.expectedError)
+		})
+	}
+}
+
+func TestAccountsClient_DeleteShouldListenToContext(t *testing.T) {
+	c := NewClient(*apiUrlFlag)
+	id := uuid.NewV1()
+
+	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute*-10))
+	defer deadlineCancel()
+
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tests := []struct {
+		name          string
+		ctx           context.Context
+		expectedError string
+	}{
+		{
+			name:          "Should fail when canceled",
+			ctx:           cancelCtx,
+			expectedError: "canceled",
+		},
+		{
+			name:          "Should fail when deadline exceeded",
+			ctx:           deadlineCtx,
+			expectedError: "deadline exceeded",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := c.DeleteAccount(tt.ctx, &id, 0)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, tt.expectedError)
+		})
+	}
+}
+
+func TestAccountsClient_CreateShouldListenToContext(t *testing.T) {
+	c := NewClient(*apiUrlFlag)
+	id := uuid.NewV1()
+
+	name := []string{"a"}
+	country := countries.ByName("PL")
+	attributes := &AccountAttributes{
+		Name:    name,
+		Country: &country,
+	}
+
+	deadlineCtx, deadlineCancel := context.WithDeadline(context.Background(), time.Now().Add(time.Minute*-10))
+	defer deadlineCancel()
+
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	tests := []struct {
+		name          string
+		ctx           context.Context
+		expectedError string
+	}{
+		{
+			name:          "Should fail when canceled",
+			ctx:           cancelCtx,
+			expectedError: "canceled",
+		},
+		{
+			name:          "Should fail when deadline exceeded",
+			ctx:           deadlineCtx,
+			expectedError: "deadline exceeded",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := c.CreateAccount(tt.ctx, &id, attributes)
+			assert.Error(t, err)
+			assert.ErrorContains(t, err, tt.expectedError)
+		})
+	}
 }
